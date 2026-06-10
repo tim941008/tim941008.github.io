@@ -1,437 +1,179 @@
-<!DOCTYPE html>
-<html lang="zh-TW" class="scroll-smooth">
+<!doctype html>
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chapter 9 頻率響應 | 彩色互動學習版</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- KaTeX for Math -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .tooltip { position: relative; border-bottom: 2px dotted #6366f1; cursor: help; color: #4f46e5; font-weight: 600;}
-        .tooltip .tooltiptext { visibility: hidden; width: 240px; background-color: #1e293b; color: #fff; text-align: left; border-radius: 8px; padding: 10px; position: absolute; z-index: 50; bottom: 130%; left: 50%; transform: translateX(-50%); opacity: 0; transition: all 0.3s ease; font-size: 0.85rem; font-weight: normal; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); line-height: 1.4; }
-        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; bottom: 140%; }
-        .tooltip .tooltiptext::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #1e293b transparent transparent transparent; }
-        
-        /* 漸層與特殊區塊設計 */
-        .math-box { background: linear-gradient(to right, #f8fafc, #f1f5f9); padding: 1.2rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; overflow-x: auto; margin-bottom: 1.5rem; text-align: center; box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02); }
-        .key-point-box { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-left: 5px solid #f59e0b; padding: 1.2rem 1.5rem; border-radius: 0 0.75rem 0.75rem 0; box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.1); margin: 1.5rem 0; }
-        
-        /* SVG 電路圖動畫效果 */
-        .circuit-line { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: drawLine 2s forwards ease-in-out; }
-        @keyframes drawLine { to { stroke-dashoffset: 0; } }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>台科大選課系統</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans leading-relaxed tracking-wide">
-
-    <!-- 頂部漸層導覽列 -->
-    <nav class="bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white sticky top-0 z-50 shadow-lg">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center overflow-x-auto">
-            <h1 class="text-xl font-extrabold whitespace-nowrap flex items-center tracking-wider">
-                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                頻率響應互動講義
-            </h1>
-            <ul class="flex space-x-6 text-sm font-medium whitespace-nowrap pl-4">
-                <li><a href="#sec-9-1-1" class="hover:text-amber-300 transition-colors">9.1.1 考量</a></li>
-                <li><a href="#sec-9-1-3" class="hover:text-amber-300 transition-colors">9.1.3 波德規則</a></li>
-                <li><a href="#sec-9-1-5" class="hover:text-amber-300 transition-colors">9.1.5 米勒定理</a></li>
-                <li><a href="#interactive-bode" class="bg-amber-500 text-amber-950 px-4 py-1.5 rounded-full hover:bg-amber-400 shadow-md transition-all">實驗室</a></li>
-            </ul>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <header class="brand">
+        <div>
+          <p class="eyebrow">NTUST 115-1</p>
+          <h1>選課系統</h1>
         </div>
-    </nav>
+        <button id="clearSelectionBtn" class="icon-button danger" type="button" title="清空已選課程" aria-label="清空已選課程">
+          <span aria-hidden="true">×</span>
+        </button>
+      </header>
 
-    <main class="max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8 bg-white shadow-xl mt-8 rounded-2xl border border-slate-100">
-        
-        <!-- 標題與簡介 -->
-        <header class="mb-12 text-center">
-            <h2 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-4 pb-2">Chapter 9 基本概念與頻率響應</h2>
-            <p class="text-slate-500 max-w-2xl mx-auto">悠揚的古典樂到搖滾樂，「20Hz—50kHz」這個音訊設備上的神祕數字，指的就是頻率響應。頻寬越廣，聲音細節還原越好。</p>
-        </header>
+      <section class="filters" aria-label="課程篩選">
+        <label class="search-box">
+          <span>搜尋</span>
+          <input id="searchInput" type="search" placeholder="課名、老師、代碼、備註">
+        </label>
 
-        <div class="key-point-box flex items-start space-x-4 mb-10">
-            <div class="text-amber-500 mt-1">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-            </div>
-            <div>
-                <h3 class="font-bold text-amber-900 text-lg mb-1">本章核心思維</h3>
-                <p class="text-amber-800">電晶體製作時會產生<strong>寄生/雜散電容</strong>。低頻時它們像斷路（不影響），但高頻時會像短路（吃掉訊號），導致電路速度受限、增益改變。本章將帶你掌握這背後的數學規律。</p>
-            </div>
+        <div class="filter-grid">
+          <label>
+            <span>年級</span>
+            <select id="gradeFilter">
+              <option value="">全部</option>
+              <option value="1">一年級</option>
+              <option value="2">二年級</option>
+              <option value="3" selected>三年級</option>
+              <option value="4">四年級</option>
+            </select>
+          </label>
+          <label>
+            <span>選班</span>
+            <select id="classSelect">
+              <option value="">顯示全部班級</option>
+            </select>
+          </label>
+          <label>
+            <span>系所代碼</span>
+            <select id="departmentFilter">
+              <option value="">全部</option>
+            </select>
+          </label>
+          <label>
+            <span>星期</span>
+            <select id="dayFilter">
+              <option value="">全部</option>
+              <option value="M">星期一</option>
+              <option value="T">星期二</option>
+              <option value="W">星期三</option>
+              <option value="R">星期四</option>
+              <option value="F">星期五</option>
+              <option value="S">星期六</option>
+            </select>
+          </label>
+          <label>
+            <span>類型</span>
+            <select id="requireFilter">
+              <option value="">全部</option>
+              <option value="R">必修</option>
+              <option value="E">選修</option>
+            </select>
+          </label>
+          <label>
+            <span>衝堂</span>
+            <select id="conflictFilter">
+              <option value="">全部顯示</option>
+              <option value="available">只看可加入</option>
+              <option value="conflict">只看會衝堂</option>
+            </select>
+          </label>
         </div>
 
-        <!-- 9.1.1 -->
-        <section id="sec-9-1-1" class="mb-16">
-            <h3 class="text-2xl font-bold text-indigo-700 mb-6 flex items-center border-b-2 border-indigo-100 pb-2">
-                <span class="bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">1</span>
-                9.1.1 一般性的考量 (Low-pass Filter)
-            </h3>
-            <p class="mb-6">
-                在低頻時 $A_v$ 值是固定的，當頻率大於某值 ($f_1$) 時，$A_v$ 值開始 <span class="tooltip">下降 (roll-off)<span class="tooltiptext">因為高頻時寄生電容形同短路，開始分流或接地，導致增益無法維持固定值。</span></span>。
-            </p>
-            
-            <!-- SVG 電路圖繪製 (RC 低通) -->
-            <div class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-8 mb-6 relative flex flex-col items-center">
-                <span class="absolute top-4 left-4 text-xs font-bold text-slate-400 tracking-widest uppercase">圖 9.3 低通濾波電路</span>
-                
-                <svg viewBox="0 0 240 120" class="w-80 h-auto stroke-indigo-600 fill-none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <!-- Vin Node -->
-                    <circle cx="20" cy="30" r="4" class="fill-white" />
-                    <text x="0" y="20" class="stroke-none fill-indigo-900 font-bold font-serif" font-size="14">Vin</text>
-                    
-                    <!-- Resistor R -->
-                    <line x1="24" y1="30" x2="60" y2="30" class="circuit-line"/>
-                    <path d="M 60,30 L 65,20 L 75,40 L 85,20 L 95,40 L 105,20 L 110,30" />
-                    <text x="80" y="12" class="stroke-none fill-rose-600 font-bold" font-size="16">R</text>
-                    <line x1="110" y1="30" x2="180" y2="30" class="circuit-line"/>
-                    
-                    <!-- Vout Node -->
-                    <circle cx="180" cy="30" r="4" class="fill-white" />
-                    <text x="185" y="20" class="stroke-none fill-indigo-900 font-bold font-serif" font-size="14">Vout</text>
-                    
-                    <!-- Capacitor C Branch -->
-                    <line x1="140" y1="30" x2="140" y2="55" class="circuit-line"/>
-                    <line x1="120" y1="55" x2="160" y2="55" stroke-width="3" class="stroke-emerald-500" />
-                    <line x1="120" y1="65" x2="160" y2="65" stroke-width="3" class="stroke-emerald-500" />
-                    <text x="170" y="66" class="stroke-none fill-emerald-600 font-bold" font-size="16">C</text>
-                    <line x1="140" y1="65" x2="140" y2="90" class="circuit-line"/>
-                    
-                    <!-- Ground Line -->
-                    <circle cx="20" cy="90" r="4" class="fill-white" />
-                    <line x1="24" y1="90" x2="180" y2="90" class="circuit-line"/>
-                    <circle cx="180" cy="90" r="4" class="fill-white" />
-                    
-                    <!-- Ground Symbol -->
-                    <line x1="140" y1="90" x2="140" y2="105" />
-                    <path d="M 125,105 L 155,105 M 132,112 L 148,112 M 138,119 L 142,119" stroke-width="2" class="stroke-slate-400" />
-                </svg>
-            </div>
-            
-            <p class="mb-2">由電路圖可知，電容 $C$ 的阻抗為 $\frac{1}{sC}$，其中 $s = j\omega$。利用分壓定理計算電壓增益：</p>
-            <div class="math-box">
-                $$ A_v = \frac{V_{out}}{V_{in}} = \frac{\frac{1}{j\omega C}}{R + \frac{1}{j\omega C}} = \frac{1}{1 + j\omega RC} $$
-                $$ |A_v| = \frac{1}{\sqrt{1 + (\omega RC)^2}} $$
-            </div>
-            
-            <div class="key-point-box">
-                <strong class="text-amber-900">💡 學習重點：-3dB 轉角頻率</strong><br>
-                <span class="text-amber-800">當頻率 $\omega = \frac{1}{RC}$ 時，代入上式會發現 $|A_v| = \frac{1}{\sqrt{2}} \approx 0.707$。因為 $20\log(0.707) \approx -3\text{dB}$，所以我們稱這個讓增益掉到原先 $0.707$ 倍的頻率為 <strong>轉角頻率 (Corner Frequency)</strong>。</span>
-            </div>
-        </section>
+        <div style="display:grid;gap:10px;margin-top:8px;">
+          <label style="display:flex;flex-direction:column;gap:6px;">
+            <span>學號末兩碼</span>
+            <input id="studentIdLast2" type="text" maxlength="2" placeholder="例如：12" style="width:100%;">
+          </label>
+          <button id="applySplitBtn" class="button primary" type="button" style="height:44px;max-width:240px;">一鍵加入課表</button>
+          <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.4;">按下後會加入該班可選課程，含必修與分流課程；<strong>數位系統設計不受分流限制</strong>。</p>
+        </div>
+      </section>
 
-        <!-- 9.1.2 & 9.1.3 -->
-        <section id="sec-9-1-3" class="mb-16">
-            <h3 class="text-2xl font-bold text-indigo-700 mb-6 flex items-center border-b-2 border-indigo-100 pb-2">
-                <span class="bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">2</span>
-                9.1.3 波德規則與零極點 (Bode Rules)
-            </h3>
-            <p class="mb-4">
-                轉移函數 $H(s)$ 的分子根稱為 <strong>零點 (Zero)</strong>，分母根稱為 <strong>極點 (Pole)</strong>。<br>
-                波德圖 (Bode plot) 則是將大小值(轉成分貝 dB) 對 角頻率取對數(log) 畫出的關係圖。波德規則提供了兩條極速繪圖的法則：
-            </p>
+      <section class="search-card" aria-label="搜尋其他課程">
+        <div class="panel-heading">
+          <div>
+            <h2>搜尋其他課程</h2>
+            <span>輸入課名、老師或課號，快速找到其他想選的課程。</span>
+          </div>
+        </div>
+        <div class="search-card-body">
+          <input id="searchInputCard" type="search" placeholder="搜尋其他課程：課名、老師、代碼、備註" />
+        </div>
+      </section>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div class="bg-gradient-to-br from-rose-50 to-pink-50 p-6 rounded-xl border border-rose-200 shadow-sm text-center">
-                    <h4 class="font-black text-rose-600 text-xl mb-2">遇到「極點 Pole」</h4>
-                    <p class="text-rose-800 font-medium">當角頻率 $\omega$ 經過極點時</p>
-                    <div class="mt-3 bg-white py-2 rounded-lg text-rose-600 font-bold text-xl border border-rose-100">
-                        斜率 -20 dB / dec (下降)
-                    </div>
-                </div>
-                <div class="bg-gradient-to-br from-emerald-50 to-teal-50 p-6 rounded-xl border border-emerald-200 shadow-sm text-center">
-                    <h4 class="font-black text-emerald-600 text-xl mb-2">遇到「零點 Zero」</h4>
-                    <p class="text-emerald-800 font-medium">當角頻率 $\omega$ 經過零點時</p>
-                    <div class="mt-3 bg-white py-2 rounded-lg text-emerald-600 font-bold text-xl border border-emerald-100">
-                        斜率 +20 dB / dec (上升)
-                    </div>
-                </div>
-            </div>
 
-            <!-- 隱藏例題 -->
-            <div class="border border-indigo-100 rounded-xl shadow-sm mb-4 overflow-hidden">
-                <button onclick="toggleElement('ex9-4')" class="w-full text-left px-6 py-4 bg-indigo-50 text-indigo-900 font-bold hover:bg-indigo-100 flex justify-between items-center transition-colors">
-                    <span class="flex items-center"><svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> 點擊展開例題：利用「節點」快速求極點</span>
-                    <span id="icon-ex9-4" class="text-indigo-500 transition-transform duration-300">▼</span>
-                </button>
-                <div id="ex9-4" class="hidden p-6 bg-white">
-                    <p class="mb-4 text-slate-700"><strong>規則：</strong>極點皆發生於電路的節點上。極點的型式為該節點上的 $\frac{1}{RC}$。</p>
-                    <p class="mb-2 text-slate-700">在具源極電阻與負載電容的放大器中，通常有兩個重要節點 (輸入與輸出)，因此可直接寫出：</p>
-                    <div class="math-box bg-slate-50">
-                        $$ \omega_{p1} = \frac{1}{R_S C_S} \quad , \quad \omega_{p2} = \frac{1}{R_D C_L} $$
-                    </div>
-                </div>
-            </div>
-        </section>
+      <section class="selected-summary" aria-label="已選統計">
+        <div>
+          <strong id="selectedCount">0</strong>
+          <span>門課</span>
+        </div>
+        <div>
+          <strong id="creditCount">0</strong>
+          <span>學分</span>
+        </div>
+        <div>
+          <strong id="hoursCount">0</strong>
+          <span>上課小時</span>
+        </div>
+        <div>
+          <strong id="conflictCount">0</strong>
+          <span>衝堂格</span>
+        </div>
+      </section>
 
-        <!-- 9.1.5 -->
-        <section id="sec-9-1-5" class="mb-16">
-            <h3 class="text-2xl font-bold text-indigo-700 mb-6 flex items-center border-b-2 border-indigo-100 pb-2">
-                <span class="bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">3</span>
-                9.1.5 米勒定理 (Miller's Theorem)
-            </h3>
-            <p class="mb-4">
-                當某些元件兩個端點皆不接地，稱之為 <span class="tooltip">浮接元件 (Floating components)<span class="tooltiptext">在電子學計算上這非常麻煩，因為會讓輸入與輸出互相牽制。米勒定理是有效解決此問題的最佳方法。</span></span>。米勒定理利用 KCL，能將一個浮接電阻/電容 $Z_F$ 切開，轉換成接於兩端的等效接地元件 $Z_1$ 與 $Z_2$。
-            </p>
-            <div class="math-box grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
-                    <span class="text-sm text-slate-400 font-bold block mb-2">輸入端等效</span>
-                    $$ Z_1 = \frac{Z_F}{1 - A_v} $$
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
-                    <span class="text-sm text-slate-400 font-bold block mb-2">輸出端等效</span>
-                    $$ Z_2 = \frac{Z_F}{1 - \frac{1}{A_v}} $$
-                </div>
-            </div>
-            
-            <div class="key-point-box">
-                <strong class="text-amber-900">💡 學習重點：米勒電容放大的秘密</strong><br>
-                <span class="text-amber-800">在反相放大器中，增益 $A_v$ 是一個「很大的負數」(例如 -100)。代入 $Z_1$ 公式，若 $Z_F$ 是電容 $C_F$，阻抗 $\frac{1}{sC_{in}} = \frac{\frac{1}{sC_F}}{1 - (-100)}$，整理可得等效輸入電容 $C_{in} = C_F(1 + 100)$。<br>這表示：<strong>一個極小的跨接寄生電容，會被米勒效應放大百倍，嚴重拖垮高頻響應！</strong></span>
-            </div>
-        </section>
+    </aside>
 
-        <!-- ★ 實驗室：動態波德圖 ★ -->
-        <section id="interactive-bode" class="mb-8 border-4 border-emerald-100 rounded-2xl overflow-hidden shadow-2xl">
-            <div class="bg-gradient-to-r from-teal-600 to-emerald-600 px-6 py-5">
-                <h3 class="text-2xl font-black text-white flex items-center tracking-wide">
-                    <svg class="w-7 h-7 mr-3 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-                    互動實驗室：RC 濾波器波德圖模擬
-                </h3>
-            </div>
-            
-            <div class="p-6 md:p-8 bg-white">
-                <p class="mb-6 text-slate-600">調整下方的電阻與電容值，觀察波德圖如何即時改變。圖中將同時疊加 <strong>低通濾波器</strong> 與 <strong>高通濾波器</strong> 的增益曲線。<br>請注意 <span class="text-rose-500 font-bold">紅色虛線</span> 代表的 <strong>-3dB 轉角頻率 $f_c$</strong>，它是曲線開始明顯轉折的關鍵點。</p>
-                
-                <!-- 控制面板 -->
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-8 items-center bg-slate-50 p-6 rounded-xl border border-slate-200 mb-8 shadow-inner">
-                    <div class="space-y-8 md:col-span-3">
-                        <div class="relative">
-                            <label class="block font-black text-slate-700 mb-4 flex justify-between">
-                                <span>電阻 $R$</span>
-                                <span class="text-emerald-600 bg-emerald-100 px-3 py-1 rounded-full text-sm"><span id="r_val" class="text-lg">10</span> kΩ</span>
-                            </label>
-                            <input type="range" id="r_slider" min="1" max="100" value="10" class="w-full h-3 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-emerald-600">
-                        </div>
-                        <div class="relative">
-                            <label class="block font-black text-slate-700 mb-4 flex justify-between">
-                                <span>電容 $C$</span>
-                                <span class="text-teal-600 bg-teal-100 px-3 py-1 rounded-full text-sm"><span id="c_val" class="text-lg">1</span> μF</span>
-                            </label>
-                            <input type="range" id="c_slider" min="0.01" max="10" step="0.01" value="1" class="w-full h-3 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-teal-600">
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-xl p-6 text-center shadow-md border-b-4 border-rose-400 md:col-span-2 h-full flex flex-col justify-center transform transition-transform hover:scale-105">
-                        <h4 class="text-slate-400 font-bold mb-2 text-sm uppercase tracking-wider">轉角頻率 (Corner Frequency)</h4>
-                        <div class="math-box !bg-transparent !border-0 !p-0 !mb-2 !shadow-none">$$ f_c = \frac{1}{2\pi RC} $$</div>
-                        <div class="text-4xl font-black text-rose-500 drop-shadow-sm" id="fc_result">15.9 Hz</div>
-                    </div>
-                </div>
+    <main class="main">
+      <section class="toolbar">
+        <div>
+          <h2>我的課表</h2>
+        </div>
+        <div class="toolbar-actions">
+          <button id="printBtn" class="button secondary" type="button">列印</button>
+          <button id="exportBtn" class="button primary" type="button">匯出已選</button>
+        </div>
+      </section>
 
-                <!-- 圖表繪製區 -->
-                <div class="relative w-full border border-slate-200 rounded-lg bg-slate-50 p-4" style="height: 450px;">
-                    <canvas id="bodeChart"></canvas>
-                </div>
-            </div>
-        </section>
+      <section class="schedule-wrap" aria-label="課表">
+        <div id="scheduleGrid" class="schedule-grid"></div>
+      </section>
+
+      <section class="results-panel" aria-label="課程列表">
+        <div class="panel-heading">
+          <h2>課程列表</h2>
+          <span id="resultCount">載入中</span>
+        </div>
+        <div id="courseList" class="course-list"></div>
+      </section>
 
     </main>
 
-    <footer class="bg-slate-900 text-slate-400 text-center py-8 mt-16 font-medium tracking-wide">
-        <p>進階電子學 互動式彩色網頁教材 &copy; 2026 <br> <span class="text-sm opacity-60 mt-2 block">Powered by KaTeX & Chart.js</span></p>
-    </footer>
+    <aside class="rightbar">
+      <section class="chosen-panel" aria-label="已選課程">
+        <div class="panel-heading">
+          <h2>已選課程</h2>
+          <span id="chosenHint">尚未加入課程</span>
+        </div>
+        <div id="chosenList" class="chosen-list"></div>
+      </section>
+    </aside>
+  </div>
 
-    <!-- 腳本區 -->
-    <script>
-        // --- 1. 折疊面板控制 ---
-        function toggleElement(id) {
-            const el = document.getElementById(id);
-            const icon = document.getElementById('icon-' + id);
-            if (el.classList.contains('hidden')) {
-                el.classList.remove('hidden');
-                icon.style.transform = "rotate(180deg)";
-            } else {
-                el.classList.add('hidden');
-                icon.style.transform = "rotate(0deg)";
-            }
-        }
+  <dialog id="exportDialog">
+    <form method="dialog">
+      <div class="dialog-head">
+        <h2>已選課程 JSON</h2>
+        <button class="icon-button" value="cancel" aria-label="關閉">×</button>
+      </div>
+      <textarea id="exportText" readonly></textarea>
+      <menu>
+        <button id="copyExportBtn" class="button primary" type="button">複製</button>
+        <button class="button secondary" value="cancel">關閉</button>
+      </menu>
+    </form>
+  </dialog>
 
-        // --- 2. Chart.js 動態波德圖 ---
-        let bodeChart = null;
-
-        function drawBodePlot(fc) {
-            const ctx = document.getElementById('bodeChart').getContext('2d');
-            
-            // X軸：頻率從 0.1Hz 到 100,000Hz (對數)
-            const frequencies = [];
-            for (let i = -1; i <= 5; i += 0.05) {
-                frequencies.push(Math.pow(10, i));
-            }
-
-            // 計算增益 (dB)
-            // LP: 20*log10( 1 / sqrt(1 + (f/fc)^2) )
-            // HP: 20*log10( (f/fc) / sqrt(1 + (f/fc)^2) )
-            const lpGain = frequencies.map(f => {
-                const r = f / fc;
-                return 20 * Math.log10(1 / Math.sqrt(1 + r * r));
-            });
-
-            const hpGain = frequencies.map(f => {
-                const r = f / fc;
-                return 20 * Math.log10(r / Math.sqrt(1 + r * r));
-            });
-
-            if (bodeChart) {
-                bodeChart.data.labels = frequencies;
-                bodeChart.data.datasets[0].data = lpGain;
-                bodeChart.data.datasets[1].data = hpGain;
-                bodeChart.update('none'); // 無動畫平滑更新
-            } else {
-                // 初始化 Chart
-                Chart.defaults.font.family = "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif";
-                bodeChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: frequencies,
-                        datasets: [
-                            {
-                                label: ' 低通濾波 (Low-pass)',
-                                data: lpGain,
-                                borderColor: '#4f46e5', // Indigo-600
-                                backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                                borderWidth: 3.5,
-                                fill: true,
-                                pointRadius: 0,
-                                pointHoverRadius: 6,
-                                tension: 0.1
-                            },
-                            {
-                                label: ' 高通濾波 (High-pass)',
-                                data: hpGain,
-                                borderColor: '#059669', // Emerald-600
-                                backgroundColor: 'rgba(5, 150, 105, 0.1)',
-                                borderWidth: 3.5,
-                                fill: true,
-                                pointRadius: 0,
-                                pointHoverRadius: 6,
-                                tension: 0.1
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        interaction: { mode: 'index', intersect: false },
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                                labels: { font: { size: 14, weight: 'bold' }, usePointStyle: true, boxWidth: 8 }
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                                titleFont: { size: 14 },
-                                bodyFont: { size: 14, weight: 'bold' },
-                                padding: 12,
-                                callbacks: {
-                                    title: (ctx) => '頻率: ' + Number(ctx[0].parsed.x).toFixed(2) + ' Hz',
-                                    label: (ctx) => ' ' + ctx.dataset.label.trim() + ': ' + ctx.parsed.y.toFixed(2) + ' dB'
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                type: 'logarithmic',
-                                title: { display: true, text: '頻率 f (Hz)', font: { size: 15, weight: 'bold' }, color: '#475569' },
-                                min: 0.1, max: 100000,
-                                grid: { color: '#e2e8f0' }
-                            },
-                            y: {
-                                title: { display: true, text: '電壓增益 |Av| (dB)', font: { size: 15, weight: 'bold' }, color: '#475569' },
-                                min: -60, max: 5,
-                                grid: { color: '#e2e8f0' }
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        // --- 3. 客製化 Chart.js 插件：畫垂直紅線 (fc) ---
-        Chart.register({
-            id: 'verticalLineMarker',
-            afterDraw: function(chart) {
-                const xVal = window.currentFc;
-                if (!xVal) return;
-                
-                const xAxis = chart.scales.x;
-                const yAxis = chart.scales.y;
-                const xPos = xAxis.getPixelForValue(xVal);
-                
-                if (xPos >= xAxis.left && xPos <= xAxis.right) {
-                    const ctx = chart.ctx;
-                    ctx.save();
-                    // 畫紅虛線
-                    ctx.beginPath();
-                    ctx.moveTo(xPos, yAxis.top);
-                    ctx.lineTo(xPos, yAxis.bottom);
-                    ctx.lineWidth = 2.5;
-                    ctx.strokeStyle = '#f43f5e'; // Rose-500
-                    ctx.setLineDash([6, 6]);
-                    ctx.stroke();
-                    
-                    // 畫頂部標籤背景
-                    ctx.fillStyle = '#f43f5e';
-                    ctx.fillRect(xPos - 25, yAxis.top + 10, 50, 24);
-                    ctx.roundRect ? ctx.roundRect(xPos - 25, yAxis.top + 10, 50, 24, 4) : null;
-                    
-                    // 標籤文字
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 12px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('fc', xPos, yAxis.top + 22);
-                    
-                    ctx.restore();
-                }
-            }
-        });
-
-        // --- 4. 聯動計算與 UI 更新 ---
-        const rSlider = document.getElementById('r_slider');
-        const cSlider = document.getElementById('c_slider');
-        const rVal = document.getElementById('r_val');
-        const cVal = document.getElementById('c_val');
-        const fcResult = document.getElementById('fc_result');
-
-        function updateSimulation() {
-            const r = parseFloat(rSlider.value) * 1000; // 轉換為 Ω
-            const c = parseFloat(cSlider.value) * 1e-6; // 轉換為 F
-            
-            const fc = 1 / (2 * Math.PI * r * c);
-            window.currentFc = fc; // 供 Chart 插件讀取
-            
-            // 更新文字顯示
-            rVal.innerText = rSlider.value;
-            cVal.innerText = cSlider.value;
-            
-            if (fc >= 1000) {
-                fcResult.innerText = (fc / 1000).toFixed(2) + " kHz";
-            } else {
-                fcResult.innerText = fc.toFixed(1) + " Hz";
-            }
-
-            // 觸發重新繪圖
-            drawBodePlot(fc);
-        }
-
-        // 綁定拖拉事件
-        rSlider.addEventListener('input', updateSimulation);
-        cSlider.addEventListener('input', updateSimulation);
-        
-        // 初始載入
-        window.addEventListener('load', updateSimulation);
-    </script>
+  <script src="course-data.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

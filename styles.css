@@ -209,9 +209,39 @@ textarea:focus {
 }
 
 .filter-grid {
+  /* 讓網格具有彈性，空間不足時自動往下排 */
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* 確保一般的 label（如年級、部別）垂直排列 */
+.filter-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 確保一般輸入框與下拉選單的寬度正常 */
+.filter-grid select,
+.filter-grid input {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+/* 針對 Checkbox 的特別處理，保持水平對齊置中 */
+.filter-grid label.checkbox-row {
+  flex-direction: row;
+  align-items: center;
+  white-space: nowrap; /* 防止文字斷行 */
+  gap: 8px;
+}
+
+.filter-grid label.checkbox-row input[type="checkbox"] {
+  width: auto; /* 取消寬度 100% 的限制 */
+  margin: 0;
 }
 
 .selected-summary {

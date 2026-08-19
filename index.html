@@ -1,179 +1,314 @@
-<!doctype html>
-<html lang="zh-Hant">
+<!DOCTYPE html>
+<html lang="zh-TW">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>台科大選課系統</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Super Mario Challenge!</title>
+    <style>
+        body {
+            margin: 0; padding: 0; background-color: #000;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+        #game-wrapper {
+            position: relative; width: 100%; max-width: 600px; height: 300px;
+            border: 4px solid #fff; border-radius: 4px; overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+        canvas {
+            display: block; background-color: #5c94fc; /* 經典天空藍 */
+        }
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(0, 0, 0, 0.7); color: white; z-index: 10; text-align: center;
+        }
+        #start-screen h2 { font-size: 28px; color: #ffeb3b; margin: 0 0 10px 0; letter-spacing: 2px; }
+        #start-screen p { margin: 5px 0; font-size: 14px; color: #ddd; line-height: 1.6; }
+        #start-btn { 
+            margin-top: 15px; font-size: 20px; font-weight: bold; color: #fff; 
+            background: #e52521; padding: 8px 20px; border-radius: 5px; cursor: pointer; 
+            border: 2px solid #fff; transition: 0.2s;
+        }
+        #start-btn:hover { background: #ff4742; transform: scale(1.05); }
+        
+        /* 告白畫面 */
+        #confession-screen {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            z-index: 20; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 20px; box-sizing: border-box;
+            animation: fadeIn 1.5s ease-in-out; color: #333;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes heartbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+    </style>
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <header class="brand">
-        <div>
-          <p class="eyebrow">NTUST 115-1</p>
-          <h1>選課系統</h1>
-        </div>
-        <button id="clearSelectionBtn" class="icon-button danger" type="button" title="清空已選課程" aria-label="清空已選課程">
-          <span aria-hidden="true">×</span>
+
+<div id="game-wrapper">
+    <canvas id="gameCanvas" width="600" height="300"></canvas>
+    
+    <div id="start-screen" class="overlay">
+        <h2>SUPER MARIO</h2>
+        <p>【控制方式】<br>⬅️ ➡️ 左右方向鍵移動<br>⬆️ 空白鍵跳躍</p>
+        <div id="start-btn">START GAME</div>
+    </div>
+
+    <!-- 告白畫面與互動按鈕 -->
+    <div id="confession-screen">
+        <div class="heart" style="font-size: 35px; margin-bottom: 0; animation: heartbeat 1.2s infinite;">❤️</div>
+        <h1 style="margin-bottom: 5px; font-size: 22px; color: #d63031;">STAGE CLEAR!</h1>
+        <p style="font-size: 14px; line-height: 1.5; margin: 5px 0;">
+            其實，這座城堡裡沒有別人，只有滿心期待等著你的我。<br>
+            和你相處的這段時間，是我每天最開心的時刻。<br>
+            就像瑪利歐的眼裡只有終點的城堡，我的眼裡也只有你。<br>
+            未來的日子，讓我為你擋下所有的煩惱與小怪物，<br>
+            冬天當你的暖暖包，夏天當你的專屬電風扇，<br>
+            陪你一起體驗這世界所有的美好。
+        </p>
+        <h2 style="color: #e84393; margin: 5px 0 10px 0; font-size: 18px;">寶貝我愛你，願意當我的女朋友嗎？</h2>
+        
+        <!-- 互動按鈕：點擊後會切換畫面 -->
+        <button onclick="document.getElementById('confession-screen').innerHTML = '<div class=\'heart\' style=\'font-size: 60px; margin-bottom: 15px; animation: heartbeat 1.2s infinite;\'>💖</div><h1 style=\'color: #e84393; margin-bottom: 15px;\'>太好了！</h1><p style=\'font-size: 18px; line-height: 1.6; font-weight: bold;\'>未來的日子請多指教，<br>我的專屬女孩！</p>'" 
+        style="background: #e84393; color: white; border: none; padding: 10px 35px; font-size: 16px; font-weight: bold; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 15px rgba(232, 67, 147, 0.4);">
+            我願意！
         </button>
-      </header>
+    </div>
+</div>
 
-      <section class="filters" aria-label="課程篩選">
-        <label class="search-box">
-          <span>搜尋</span>
-          <input id="searchInput" type="search" placeholder="課名、老師、代碼、備註">
-        </label>
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startScreen = document.getElementById('start-screen');
+    const confessionScreen = document.getElementById('confession-screen');
+    const startBtn = document.getElementById('start-btn');
 
-        <div class="filter-grid">
-          <label>
-            <span>年級</span>
-            <select id="gradeFilter">
-              <option value="">全部</option>
-              <option value="1">一年級</option>
-              <option value="2">二年級</option>
-              <option value="3" selected>三年級</option>
-              <option value="4">四年級</option>
-            </select>
-          </label>
-          <label>
-            <span>選班</span>
-            <select id="classSelect">
-              <option value="">顯示全部班級</option>
-            </select>
-          </label>
-          <label>
-            <span>系所代碼</span>
-            <select id="departmentFilter">
-              <option value="">全部</option>
-            </select>
-          </label>
-          <label>
-            <span>星期</span>
-            <select id="dayFilter">
-              <option value="">全部</option>
-              <option value="M">星期一</option>
-              <option value="T">星期二</option>
-              <option value="W">星期三</option>
-              <option value="R">星期四</option>
-              <option value="F">星期五</option>
-              <option value="S">星期六</option>
-            </select>
-          </label>
-          <label>
-            <span>類型</span>
-            <select id="requireFilter">
-              <option value="">全部</option>
-              <option value="R">必修</option>
-              <option value="E">選修</option>
-            </select>
-          </label>
-          <label>
-            <span>衝堂</span>
-            <select id="conflictFilter">
-              <option value="">全部顯示</option>
-              <option value="available">只看可加入</option>
-              <option value="conflict">只看會衝堂</option>
-            </select>
-          </label>
-        </div>
+    let isPlaying = false, isGameOver = false, frame = 0, score = 0;
+    const keys = { left: false, right: false };
 
-        <div style="display:grid;gap:10px;margin-top:8px;">
-          <label style="display:flex;flex-direction:column;gap:6px;">
-            <span>學號末兩碼</span>
-            <input id="studentIdLast2" type="text" maxlength="2" placeholder="例如：12" style="width:100%;">
-          </label>
-          <button id="applySplitBtn" class="button primary" type="button" style="height:44px;max-width:240px;">一鍵加入課表</button>
-          <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.4;">按下後會加入該班可選課程，含必修與分流課程；<strong>數位系統設計不受分流限制</strong>。</p>
-        </div>
-      </section>
+    // ==========================================
+    // 像素繪圖引擎 (純程式碼畫出角色，不依賴圖片)
+    // ==========================================
+    const palette = {
+        '0': null, '1': '#e52521', '2': '#8a6327', '3': '#fccb92', 
+        '4': '#214ced', '5': '#fce903', '6': '#000000', '7': '#ffffff', '8': '#cc4b37'
+    };
 
-      <section class="search-card" aria-label="搜尋其他課程">
-        <div class="panel-heading">
-          <div>
-            <h2>搜尋其他課程</h2>
-            <span>輸入課名、老師或課號，快速找到其他想選的課程。</span>
-          </div>
-        </div>
-        <div class="search-card-body">
-          <input id="searchInputCard" type="search" placeholder="搜尋其他課程：課名、老師、代碼、備註" />
-        </div>
-      </section>
+    const marioStand = [
+        "000111110000", "001111111110", "002223323000", "023233323330",
+        "023223332333", "022333300000", "000333333300", "001141110000",
+        "011141141110", "111144441111", "331454454133", "333444444333",
+        "334444444433", "004440044400", "022200002220", "222200002222"
+    ];
+    const marioRun = [
+        "000111110000", "001111111110", "002223323000", "023233323330",
+        "023223332333", "022333300000", "000333333300", "001141110000",
+        "011141141110", "111144441111", "331454454133", "333444444333",
+        "334444444433", "004440044400", "022200000222", "222200000022"
+    ];
+    const marioJump = [
+        "000011111000", "000111111110", "000222332300", "002323332333",
+        "002322333233", "002233330000", "000033333330", "001114111000",
+        "011114114111", "111114444111", "331145445433", "333444444433",
+        "330444444433", "000440004400", "002220002220", "002220002220"
+    ];
+    const goombaArt = [
+        "0000000220000000", "0000002222000000", "0000022222200000", "0000222222220000",
+        "0002222222222000", "0022222222222200", "0022266226622200", "0222276226722220",
+        "0222276226722220", "0222222222222220", "0222222222222220", "0022222222222200",
+        "0000333333330000", "0006633333366000", "0066660000666600", "0666660000666660"
+    ];
+    const castleArt = [
+        "0000000000000000", "0000080808000000", "0000088888000000", "0000088688000000",
+        "0000088888000000", "0080888888808000", "0088888888888000", "0088888688888000",
+        "0088888888888000", "0888888888888800", "0888888888888800", "0888866666888800",
+        "0888860006888800", "0888860006888800", "0888860006888800", "0888860006888800"
+    ];
 
+    function drawPixelArt(art, startX, startY, pixelSize, flipX = false) {
+        for (let r = 0; r < art.length; r++) {
+            for (let c = 0; c < art[r].length; c++) {
+                let color = palette[art[r][c]];
+                if (color) {
+                    ctx.fillStyle = color;
+                    let drawX = flipX ? (startX + (art[r].length - 1 - c) * pixelSize) : (startX + c * pixelSize);
+                    ctx.fillRect(drawX, startY + r * pixelSize, pixelSize, pixelSize);
+                }
+            }
+        }
+    }
 
-      <section class="selected-summary" aria-label="已選統計">
-        <div>
-          <strong id="selectedCount">0</strong>
-          <span>門課</span>
-        </div>
-        <div>
-          <strong id="creditCount">0</strong>
-          <span>學分</span>
-        </div>
-        <div>
-          <strong id="hoursCount">0</strong>
-          <span>上課小時</span>
-        </div>
-        <div>
-          <strong id="conflictCount">0</strong>
-          <span>衝堂格</span>
-        </div>
-      </section>
+    // ==========================================
+    // 遊戲主體邏輯
+    // ==========================================
+    const GROUND_Y = 252; // 地板高度
 
-    </aside>
+    const mario = {
+        x: 50, y: GROUND_Y - 48, width: 36, height: 48,
+        dy: 0, gravity: 0.6, jumpForce: -11, speed: 4,
+        isJumping: false, facing: 'right',
+        
+        draw() {
+            let currentArt = marioStand;
+            if (this.isJumping) currentArt = marioJump;
+            else if (keys.left || keys.right) {
+                currentArt = (frame % 20 < 10) ? marioStand : marioRun;
+            }
+            drawPixelArt(currentArt, this.x, this.y, 3, this.facing === 'left');
+        },
+        update() {
+            if (keys.left) { this.x -= this.speed; this.facing = 'left'; }
+            if (keys.right) { this.x += this.speed; this.facing = 'right'; }
+            if (this.x < 0) this.x = 0;
+            if (this.x + this.width > canvas.width) this.x = canvas.width - this.width;
 
-    <main class="main">
-      <section class="toolbar">
-        <div>
-          <h2>我的課表</h2>
-        </div>
-        <div class="toolbar-actions">
-          <button id="printBtn" class="button secondary" type="button">列印</button>
-          <button id="exportBtn" class="button primary" type="button">匯出已選</button>
-        </div>
-      </section>
+            this.dy += this.gravity;
+            this.y += this.dy;
+            if (this.y >= GROUND_Y - 48) {
+                this.y = GROUND_Y - 48;
+                this.dy = 0;
+                this.isJumping = false;
+            }
+            this.draw();
+        },
+        jump() {
+            if (!this.isJumping) {
+                this.dy = this.jumpForce;
+                this.isJumping = true;
+            }
+        }
+    };
 
-      <section class="schedule-wrap" aria-label="課表">
-        <div id="scheduleGrid" class="schedule-grid"></div>
-      </section>
+    let enemies = [], castle = null;
+    const scenery = {
+        clouds: [{x: 100, y: 40}, {x: 400, y: 70}],
+        draw() {
+            ctx.fillStyle = '#fcb43c';
+            ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
+            ctx.fillStyle = '#00a800'; 
+            ctx.fillRect(0, GROUND_Y, canvas.width, 4);
+            
+            ctx.strokeStyle = '#c84c0c';
+            ctx.lineWidth = 2;
+            for(let i = 0; i < canvas.width; i+=24) {
+                ctx.strokeRect(i, GROUND_Y + 4, 24, 24);
+                ctx.strokeRect(i - 12, GROUND_Y + 28, 24, 24);
+            }
 
-      <section class="results-panel" aria-label="課程列表">
-        <div class="panel-heading">
-          <h2>課程列表</h2>
-          <span id="resultCount">載入中</span>
-        </div>
-        <div id="courseList" class="course-list"></div>
-      </section>
+            ctx.fillStyle = '#fff';
+            this.clouds.forEach(c => {
+                c.x -= 0.3; if(c.x < -60) c.x = canvas.width;
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, 15, 0, Math.PI * 2);
+                ctx.arc(c.x + 15, c.y - 5, 20, 0, Math.PI * 2);
+                ctx.arc(c.x + 30, c.y, 15, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+    };
 
-    </main>
+    function resetGame() {
+        enemies = []; castle = null; score = 0; frame = 0;
+        mario.x = 50; mario.y = GROUND_Y - 48; isGameOver = false;
+        keys.left = false; keys.right = false;
+    }
 
-    <aside class="rightbar">
-      <section class="chosen-panel" aria-label="已選課程">
-        <div class="panel-heading">
-          <h2>已選課程</h2>
-          <span id="chosenHint">尚未加入課程</span>
-        </div>
-        <div id="chosenList" class="chosen-list"></div>
-      </section>
-    </aside>
-  </div>
+    function handleEnemies() {
+        if (frame % 130 === 0 && score < 3 && !castle) {
+            enemies.push({ x: canvas.width, y: GROUND_Y - 48, width: 48, height: 48 });
+        }
+        enemies.forEach((enemy, index) => {
+            enemy.x -= 2;
+            drawPixelArt(goombaArt, enemy.x, enemy.y, 3);
 
-  <dialog id="exportDialog">
-    <form method="dialog">
-      <div class="dialog-head">
-        <h2>已選課程 JSON</h2>
-        <button class="icon-button" value="cancel" aria-label="關閉">×</button>
-      </div>
-      <textarea id="exportText" readonly></textarea>
-      <menu>
-        <button id="copyExportBtn" class="button primary" type="button">複製</button>
-        <button class="button secondary" value="cancel">關閉</button>
-      </menu>
-    </form>
-  </dialog>
+            if (mario.x < enemy.x + enemy.width - 10 &&
+                mario.x + mario.width - 10 > enemy.x &&
+                mario.y < enemy.y + enemy.height - 10 &&
+                mario.y + mario.height > enemy.y) {
+                
+                if(mario.dy > 0 && mario.y + mario.height - mario.dy <= enemy.y + 15) {
+                    enemies.splice(index, 1);
+                    mario.dy = -7;
+                    score++;
+                } else {
+                    isGameOver = true;
+                }
+            }
+        });
+        enemies = enemies.filter(e => e.x + e.width > 0);
+    }
 
-  <script src="course-data.js"></script>
-  <script src="app.js"></script>
+    function handleCastle() {
+        if (score >= 3 && !castle && enemies.length === 0) {
+            castle = { x: canvas.width, y: GROUND_Y - 128, width: 128, height: 128 };
+        }
+        if (castle) {
+            castle.x -= 1.5;
+            
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(castle.x + 62, castle.y - 40, 4, 40);
+            ctx.fillStyle = '#00a800';
+            ctx.fillRect(castle.x + 66, castle.y - 40, 20, 15);
+            drawPixelArt(castleArt, castle.x, castle.y, 8);
+            
+            if (mario.x + mario.width > castle.x + 50) {
+                isPlaying = false;
+                confessionScreen.style.display = 'flex';
+            }
+        }
+    }
+
+    function animate() {
+        if (!isPlaying) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        scenery.draw();
+        
+        if (!isGameOver) {
+            mario.update(); handleEnemies(); handleCastle();
+            frame++; requestAnimationFrame(animate);
+        } else {
+            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 10);
+            ctx.font = '16px sans-serif';
+            ctx.fillText('點擊畫面重新挑戰！', canvas.width/2, canvas.height/2 + 25);
+            ctx.textAlign = 'left'; isPlaying = false;
+        }
+    }
+
+    function triggerStart() {
+        if (confessionScreen.style.display === 'flex') return;
+        if (!isPlaying) {
+            if (isGameOver) resetGame();
+            isPlaying = true; startScreen.style.display = 'none'; animate();
+        }
+    }
+
+    startBtn.addEventListener('click', triggerStart);
+    canvas.addEventListener('mousedown', () => { if(isGameOver) triggerStart(); });
+
+    window.addEventListener('keydown', (e) => {
+        if (!isPlaying && e.code === 'Space') { e.preventDefault(); triggerStart(); return; }
+        if (!isPlaying) return;
+        if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); mario.jump(); }
+        if (e.code === 'ArrowLeft') keys.left = true;
+        if (e.code === 'ArrowRight') keys.right = true;
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (e.code === 'ArrowLeft') keys.left = false;
+        if (e.code === 'ArrowRight') keys.right = false;
+    });
+
+    window.addEventListener('touchstart', (e) => {
+        if(e.target === startBtn) return;
+        if(e.target.tagName.toLowerCase() === 'button') return; // 防止擋住按鈕點擊
+        e.preventDefault();
+        if(!isPlaying) triggerStart(); else mario.jump();
+    }, {passive: false});
+</script>
 </body>
 </html>
